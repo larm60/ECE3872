@@ -34,7 +34,7 @@ tempo_s = 0.6 %This is the time in seconds for each note
 
 %% Parameters for code simulation
 tempo_resolution = .05; %this is a value between 0 and 1. 1 being full resolution
-time_offset = 60;   % This is the delay to the start of the song.
+time_offset = 99;   % This is the delay to the start of the song.
   
 %% Create the song given the tempo
 [song_freq_Hz, song_duration_s] = conductor_simulation(tempo_s,Octive);
@@ -72,30 +72,49 @@ end
 
 %% Create a signal to test the system
 %%Put two copies of the song together
-signal = [digital, digital];
-signal = circshift(signal, time_offset);
-
 
 %% Plot the Time Domain
-plot(time_s,digital)
-xlabel("time (s)")
-ylabel("Amplitude")
-title("Row Row Row Your Boat")
+
+%plot(time_s,digital)
+%xlabel("time (s)")
+%ylabel("Amplitude")
+%title("Row Row Row Your Boat")
 
 %% Plot the frequency
 figure()
 freq_digital = fft(digital);
 freq_digital = freq_digital(1:floor(length(digital)/2));
 freq_axis_kHz = linspace(0, fs_kHz/2, length(freq_digital));
-plot(freq_axis_kHz, abs(freq_digital))
-xlabel("Frequency (kHz)")
-ylabel("Amplitude")
-title("Spectrum of Row Row Row Your Boat")
+%plot(freq_axis_kHz, abs(freq_digital))
+%xlabel("Frequency (kHz)")
+%ylabel("Amplitude")
+%title("Spectrum of Row Row Row Your Boat")
 
 %
 %% Find the Tempo
 
+[peaks,locs] = findpeaks(song_freq_Hz, cumulative_duration_s);
+noteTempo = locs(2)-locs(1); %gives us the duration of first note + beat
+onlyTempo = noteTempo - song_duration_s(1); %calculate the note length of the first note received and subtract it from note tempo duration
+disp(onlyTempo);
 
+plot(locs, peaks)
+xlabel("Time")
+ylabel("Peak")
+title("Locations of peaks")
 %% Sync the time
-
+calcOffset = 0;
+signal = digital;
+signal = circshift(signal, -time_offset); %shift the digital vector to the left based on offset
+    for b = 1:length(time_s) %loops through original digital signal to find time where signal is at
+        if and(digital(b) == signal(1), digital(b) ~= 0)
+            calcOffset = b-1;
+            break
+        end
+    end
 actual_time_offset_s = time_s(time_offset) %print out the actual start time to compare.
+measured_time_offset_s = time_s(calcOffset)
+plot(time_s, signal) %timing synced song to be played
+xlabel("Time (s)")
+ylabel("Amplitude")
+title("Offset Timing Sync")
